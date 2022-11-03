@@ -26,6 +26,9 @@ server <- function(input, output) {
   
 
   values <- reactiveValues(inData = NA)
+  database <- NA
+  model_log <- readRDS("data/model_log.rds")
+  model_nn <- readRDS("data/model_nn_train_data.rds")
   
   observeEvent(input$submit,{
       values$inData <- data.frame(input$soil.name,as.numeric(input$G),as.numeric(input$qt),as.numeric(input$fs),as.numeric(input$u))
@@ -44,26 +47,21 @@ server <- function(input, output) {
     }
     else{
       tbl <- read.csv(inFile$datapath, header=input$header, sep=input$sep, dec = ".",stringsAsFactors=TRUE)
+      database <- as.data.frame(tbl)
     }
-      
-    model_log <- readRDS("data/model_log.rds")
-    model_nn <- readRDS("data/model_nn_train_data.rds")
-    database <- as.data.frame(tbl)
     
+    if(is.null(nrow(database))){
+      database <- as.data.frame(tbl)
+    }
 
     if(!is.null(values$inData) && input$submit>0) {
-        print(values$inData)
-       
         database<-rbind(database,values$inData)
-        
     }
-
     database$logFs <- log(database$fs+1)
     database$logqt <- log(database$qt+1)
     database$UTransf <- log(database$u+1)
     database$yhat_lm_log <- predict(model_log, database)
-    print(database)
-    database <- select(database, c(G,qt,fs,u,yhat_lm_log))
+    database_model <- select(database, c(G,qt,fs,u,yhat_lm_log))
     max_data <- data.frame(G = c(4.34210),
                            qt = c(48123.74150),
                            fs = c(611.40524),
@@ -77,11 +75,15 @@ server <- function(input, output) {
                            yhat_lm_log = c(9.976484)
     )
 
-    scaled <- scale(database,center = min_data, scale = max_data - min_data)
+    scaled <- scale(database_model,center = min_data, scale = max_data - min_data)
     pr.all <- neuralnet::compute(model_nn,scaled)
     
-    tbl$p.gamma <- pr.all$net.result*(29.89422-9.640000)+9.640000
-    return(tbl)
+    database$p.gamma <- pr.all$net.result*(29.89422-9.640000)+9.640000
+    
+    database_print <- select(database, c(soil.name,G,qt,fs,u,yhat_lm_log,p.gamma))
+    database <<- select(database,c(soil.name,G,qt,fs,u))
+    names(database_print) <- c("Soil name","G","qt","fs","u","Predicted Gamma (log model)","Predicted Gamma (NN model)")
+    return(database_print)
   })
   
 }
