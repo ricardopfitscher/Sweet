@@ -2,7 +2,7 @@ pacotes <- c("tidyverse","ggrepel","fastDummies","knitr", "splines",
              "reshape2","PerformanceAnalytics","metan","correlation",
              "see","ggraph","nortest","rgl","car","olsrr","jtools",
              "ggstance","cowplot","beepr","factoextra","neuralnet",
-             "ggpubr","GGally", "viridis", "plyr")
+             "ggpubr","GGally", "viridis", "plyr", "ggforce")
 
 if(sum(as.numeric(!pacotes %in% installed.packages())) != 0){
   instalador <- pacotes[!pacotes %in% installed.packages()]
@@ -27,13 +27,14 @@ solos<-na.omit(solos)
 
 #plotting soils information
 ggplot(solos) +
- geom_bar(aes(x=TIPO.DE.SOLO)) +
+ geom_bar(aes(x=Soil)) +
   labs(x="",y="Number of occurrences")+
   theme_bw()+
-  theme(text = element_text(family = "Arial"))+
+  #theme(text = element_text(family = "Arial"))+
+  facet_zoom(ylim = c(0, 300))+
   theme(plot.title = element_blank(), axis.text.x=element_text(angle=90,hjust=1,vjust=0.5,size=14),text = element_text(size = 14))   
 
-ggsave("soils.png",height=8,width = 16)
+ggsave("soils.pdf",height=8,width = 16)
 
 # Histograma do G
 ggplot(solos, aes(G))+
@@ -47,7 +48,7 @@ ggsave("Histogram of G.png",height=8,width = 8)
 # Histograma do G por tipo de solo:
 
 solos %>%
-  ggplot(aes(x=G, color=TIPO.DE.SOLO, fill=TIPO.DE.SOLO)) +
+  ggplot(aes(x=G, color=Soil, fill=Soil)) +
   labs(y="Probability distribution function (%)")+
  # geom_density()+
   #geom_histogram(aes(y=..density..), alpha=0.5, position="identity")+
@@ -66,29 +67,29 @@ outliers_removal <- function(dataset){
   tipos_solos <- unique(dataset[,1])
   for(tipo in tipos_solos){
     ##############FS############################
-    qnt <- quantile(dataset[dataset$TIPO.DE.SOLO==tipo,"fs"], probs=c(.25, .75), na.rm = T)
-    caps <- quantile(dataset[dataset$TIPO.DE.SOLO==tipo,"fs"], probs=c(.05, .95), na.rm = T)
-    H <- 1.5 * IQR(dataset[dataset$TIPO.DE.SOLO==tipo,"fs"], na.rm = T)
-    dataset[dataset$TIPO.DE.SOLO == tipo & dataset$fs  > qnt[2]+H,"fs"] <- caps[2]
-    dataset[dataset$TIPO.DE.SOLO == tipo & dataset$fs  < qnt[1]-H,"fs"] <- caps[1]
+    qnt <- quantile(dataset[dataset$Soil==tipo,"fs"], probs=c(.25, .75), na.rm = T)
+    caps <- quantile(dataset[dataset$Soil==tipo,"fs"], probs=c(.05, .95), na.rm = T)
+    H <- 1.5 * IQR(dataset[dataset$Soil==tipo,"fs"], na.rm = T)
+    dataset[dataset$Soil == tipo & dataset$fs  > qnt[2]+H,"fs"] <- caps[2]
+    dataset[dataset$Soil == tipo & dataset$fs  < qnt[1]-H,"fs"] <- caps[1]
     ##############G############################
-    qnt <- quantile(dataset[dataset$TIPO.DE.SOLO==tipo,"G"], probs=c(.25, .75), na.rm = T)
-    caps <- quantile(dataset[dataset$TIPO.DE.SOLO==tipo,"G"], probs=c(.05, .95), na.rm = T)
-    H <- 1.5 * IQR(dataset[dataset$TIPO.DE.SOLO==tipo,"G"], na.rm = T)
-    dataset[dataset$TIPO.DE.SOLO == tipo & dataset$G  > qnt[2]+H,"G"] <- caps[2]
-    dataset[dataset$TIPO.DE.SOLO == tipo & dataset$G  < qnt[1]-H,"G"] <- caps[1]
+    qnt <- quantile(dataset[dataset$Soil==tipo,"G"], probs=c(.25, .75), na.rm = T)
+    caps <- quantile(dataset[dataset$Soil==tipo,"G"], probs=c(.05, .95), na.rm = T)
+    H <- 1.5 * IQR(dataset[dataset$Soil==tipo,"G"], na.rm = T)
+    dataset[dataset$Soil == tipo & dataset$G  > qnt[2]+H,"G"] <- caps[2]
+    dataset[dataset$Soil == tipo & dataset$G  < qnt[1]-H,"G"] <- caps[1]
     ##############u############################
-    qnt <- quantile(dataset[dataset$TIPO.DE.SOLO==tipo,"u"], probs=c(.25, .75), na.rm = T)
-    caps <- quantile(dataset[dataset$TIPO.DE.SOLO==tipo,"u"], probs=c(.05, .95), na.rm = T)
-    H <- 1.5 * IQR(dataset[dataset$TIPO.DE.SOLO==tipo,"u"], na.rm = T)
-    dataset[dataset$TIPO.DE.SOLO == tipo & dataset$u  > qnt[2]+H,"u"] <- caps[2]
-    dataset[dataset$TIPO.DE.SOLO == tipo & dataset$u  < qnt[1]-H,"u"] <- caps[1]
+    qnt <- quantile(dataset[dataset$Soil==tipo,"u"], probs=c(.25, .75), na.rm = T)
+    caps <- quantile(dataset[dataset$Soil==tipo,"u"], probs=c(.05, .95), na.rm = T)
+    H <- 1.5 * IQR(dataset[dataset$Soil==tipo,"u"], na.rm = T)
+    dataset[dataset$Soil == tipo & dataset$u  > qnt[2]+H,"u"] <- caps[2]
+    dataset[dataset$Soil == tipo & dataset$u  < qnt[1]-H,"u"] <- caps[1]
     ##############qt############################
-    qnt <- quantile(dataset[dataset$TIPO.DE.SOLO==tipo,"qt"], probs=c(.25, .75), na.rm = T)
-    caps <- quantile(dataset[dataset$TIPO.DE.SOLO==tipo,"qt"], probs=c(.05, .95), na.rm = T)
-    H <- 1.5 * IQR(dataset[dataset$TIPO.DE.SOLO==tipo,"qt"], na.rm = T)
-    dataset[dataset$TIPO.DE.SOLO == tipo & dataset$qt  > qnt[2]+H,"qt"] <- caps[2]
-    dataset[dataset$TIPO.DE.SOLO == tipo & dataset$qt  < qnt[1]-H,"qt"] <- caps[1]
+    qnt <- quantile(dataset[dataset$Soil==tipo,"qt"], probs=c(.25, .75), na.rm = T)
+    caps <- quantile(dataset[dataset$Soil==tipo,"qt"], probs=c(.05, .95), na.rm = T)
+    H <- 1.5 * IQR(dataset[dataset$Soil==tipo,"qt"], na.rm = T)
+    dataset[dataset$Soil == tipo & dataset$qt  > qnt[2]+H,"qt"] <- caps[2]
+    dataset[dataset$Soil == tipo & dataset$qt  < qnt[1]-H,"qt"] <- caps[1]
   }
   return(dataset)
 }
@@ -97,7 +98,7 @@ solos <- outliers_removal(solos)
 
 summary(solos)
 solos %>%
-  ggplot(aes(x=G, color=TIPO.DE.SOLO, fill=TIPO.DE.SOLO)) +
+  ggplot(aes(x=G, color=Soil, fill=Soil)) +
   labs(y="Probability distribution function (%)")+
   # geom_density()+
   #geom_histogram(aes(y=..density..), alpha=0.5, position="identity")+
@@ -129,7 +130,7 @@ ggsave("scatter.png",height=8,width = 8)
 #     TRATA-SE DE UMA REGRESSÃO LINEAR
 ##################################################################################
 #Estimando a Regressão Múltipla
-modelo_solos <- lm(formula = gamma ~ . - TIPO.DE.SOLO,
+modelo_solos <- lm(formula = gamma ~ . - Soil,
                       data = solos)
 summary(modelo_solos)
 #################################################################################
