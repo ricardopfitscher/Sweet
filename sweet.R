@@ -25,6 +25,11 @@ solos$u[solos$u<0] <-0
 # removing NAs
 solos<-na.omit(solos)
 
+solos <- within(solos, 
+                   Soil <- factor(Soil, 
+                                      levels=names(sort(table(Soil), 
+                                                        decreasing=TRUE))))
+
 #plotting soils information
 ggplot(solos) +
  geom_bar(aes(x=Soil)) +
@@ -198,7 +203,7 @@ solos %>%
               color = "grey30", size = 1.05,
               linetype = "longdash") +
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
-  labs(x = "Soil specific weight (kN/m³)", y = "Estimated soil specific weight (kN/m³)") +
+  labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
   theme_bw() +
   theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
@@ -225,7 +230,7 @@ solos %>%
               color = "grey30", size = 1.05,
               linetype = "longdash") +
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
-  labs(x = "Soil specific weight (kN/m³)", y = "Estimated soil specific weight (kN/m³)") +
+  labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
   theme_bw() +
   theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
@@ -247,7 +252,7 @@ test_data %>%
               color = "grey30", size = 1.05,
               linetype = "longdash") +
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
-  labs(x = "Soil specific weight (kN/m³)", y = "Estimated soil specific weight (kN/m³)") +
+  labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
   theme_bw() +
   theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
@@ -269,9 +274,10 @@ solos %>%
               color = "grey30", size = 1.05,
               linetype = "longdash") +
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
-  labs(x = "Soil specific weight (kN/m³)", y = "Estimated soil specific weight (kN/m³)") +
+  labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
   theme_bw() +
   theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
 ggsave("neural_network_entrada_log_4_camadas.png",height=8,width = 8)
+
