@@ -157,7 +157,7 @@ soils$yhat_lm_log <- model_log$fitted.values
 #################################################################################
 #     Robertson & Cabal (2010)
 #############################################################################
-soils$yhat_gamma_r_cabal <- 0.24*(0.27 * log(abs(soils$Rf)) + 0.36*log(soils$qt*100) +1.236)*10*soils$G/2.65
+soils$yhat_gamma_r_cabal <- 3.72+ 0.24*(0.27 * log(abs(soils$Rf)) + 0.36*log(soils$qt*100) +1.236)*10*soils$G/2.65
 summary(lm(formula=gamma~yhat_gamma_r_cabal, data=soils))
 plot(soils$yhat_gamma_r_cabal,soils$gamma)
 rsq(soils$yhat_gamma_r_cabal,soils$gamma)
@@ -177,7 +177,7 @@ plot(soils$yhat_gamma_mayne,soils$gamma)
 rsq(soils$yhat_gamma_mayne,soils$gamma)
 
 ###############NEURAL NETWORK##############################
-soils_nn <- select(soils, c(gamma, G,qt,fs,u,yhat_lm_log))
+soils_nn <- select(soils, c(gamma, G,qt,fs,u,yhat_lm_log,yhat_gamma_r_cabal))
 
 #Scaling data for performance
 set.seed(42)
