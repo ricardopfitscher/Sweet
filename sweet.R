@@ -177,7 +177,7 @@ plot(soils$yhat_gamma_mayne,soils$gamma)
 rsq(soils$yhat_gamma_mayne,soils$gamma)
 
 ###############NEURAL NETWORK##############################
-soils_nn <- select(soils, c(gamma, G,qt,fs,u,yhat_lm_log,yhat_gamma_r_cabal))
+soils_nn <- select(soils, c(gamma, G,qt,fs,u,yhat_lm_log))
 
 #Scaling data for performance
 set.seed(42)
@@ -195,8 +195,8 @@ saveRDS(nn, "model_nn_train_data.rds")
 nn_all <- neuralnet(gamma~.,data=scaled,hidden=c(32,16,8,4),linear.output=T)
 saveRDS(nn_all, "model_nn_all_data.rds")
 
-pr.nn <- compute(nn,test_data[,2:7])
-pr.all <- compute(nn,scaled[,2:7])
+pr.nn <- compute(nn,test_data[,2:6])
+pr.all <- compute(nn,scaled[,2:6])
 
 test_data$yhat_nn <- pr.nn$net.result
 
@@ -286,6 +286,52 @@ soils %>%
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
 ggsave("robertson_and_cabal.png",height=8,width = 8)
+
+
+# Mayne & Peuchen (2012)
+rsq(soils$gamma,soils$yhat_gamma_m_peuchen)
+eqn <- sprintf(
+  "  'Mayne & Peuchen (2012)'   ~~ italic(r)^2 ~ '=' ~ %.2g",
+  rsq(soils$gamma,soils$yhat_gamma_m_peuchen)
+)
+
+soils %>%
+  ggplot() +
+  geom_point(aes(x = gamma, y = yhat_gamma_m_peuchen),
+             color = "black", alpha = 0.6, size = 2) +
+  geom_smooth(aes(x = gamma, y = gamma), method = "lm", 
+              color = "grey30", size = 1.05,
+              linetype = "longdash") +
+  annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
+  labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
+  theme_bw() +
+  theme(text = element_text(family = "Arial"))+
+  theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
+
+ggsave("Mayne_and_peuchen.png",height=8,width = 8)
+
+
+# Mayne (2014)
+rsq(soils$gamma,soils$yhat_gamma_mayne)
+eqn <- sprintf(
+  "  'Mayne (2014)'   ~~ italic(r)^2 ~ '=' ~ %.2g",
+  rsq(soils$gamma,soils$yhat_gamma_mayne)
+)
+
+soils %>%
+  ggplot() +
+  geom_point(aes(x = gamma, y = yhat_gamma_mayne),
+             color = "black", alpha = 0.6, size = 2) +
+  geom_smooth(aes(x = gamma, y = gamma), method = "lm", 
+              color = "grey30", size = 1.05,
+              linetype = "longdash") +
+  annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
+  labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
+  theme_bw() +
+  theme(text = element_text(family = "Arial"))+
+  theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
+
+ggsave("Mayne_2014.png",height=8,width = 8)
 
 
 
