@@ -165,7 +165,8 @@ rsq(soils$yhat_gamma_r_cabal,soils$gamma)
 #################################################################################
 # Mayne & Peuchen (2012)
 #############################################################################
-soils$yhat_gamma_m_peuchen <- (0.636*(soils$qt)^0.072) * (10 + soils$mq/8)
+#soils$yhat_gamma_m_peuchen <- (0.636*(soils$qt)^0.072) * (10 + soils$mq/8)
+soils$yhat_gamma_m_peuchen <- (0.886*(soils$qt/100)^0.072) * (1 + 0.125*soils$mq/10) *10
 plot(soils$yhat_gamma_m_peuchen,soils$gamma)
 rsq(soils$yhat_gamma_m_peuchen,soils$gamma)
 
