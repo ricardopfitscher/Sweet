@@ -2,7 +2,7 @@ pacotes <- c("tidyverse","ggrepel","fastDummies","knitr", "splines",
              "reshape2","PerformanceAnalytics","metan","correlation",
              "see","ggraph","nortest","rgl","car","olsrr","jtools",
              "ggstance","cowplot","beepr","factoextra","neuralnet",
-             "ggpubr","GGally", "viridis", "plyr", "ggforce")
+             "ggpubr","GGally", "viridis", "plyr", "ggforce","randomForest")
 
 if(sum(as.numeric(!pacotes %in% installed.packages())) != 0){
   instalador <- pacotes[!pacotes %in% installed.packages()]
@@ -185,6 +185,10 @@ set.seed(42)
 max_data <- apply(soils_nn, 2, max) 
 min_data <- apply(soils_nn, 2, min)
 scaled <- scale(soils_nn,center = min_data, scale = max_data - min_data)
+scaled <- cbind(scaled, select(soils,Soil))
+
+model_RF <- randomForest(Soil~., data = scaled, ntree = 100, mtry = 3, importance = TRUE)
+model_RF
 
 index = sample(1:nrow(soils_nn),round(0.70*nrow(soils_nn)))
 train_data <- as.data.frame(scaled[index,])
