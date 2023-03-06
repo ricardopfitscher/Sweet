@@ -4,6 +4,7 @@ pacotes <- c("tidyverse","ggrepel","fastDummies","knitr", "splines",
              "ggstance","cowplot","beepr","factoextra","neuralnet",
              "ggpubr","GGally", "viridis", "plyr", "ggforce","randomForest")
 
+install.packages("devtools")
 library("devtools")
 source_url('https://gist.githubusercontent.com/fawda123/7471137/raw/466c1474d0a505ff044412703516c34f1a4684a5/nnet_plot_update.r')
 
@@ -52,7 +53,7 @@ ggplot(soils, aes(G))+
   geom_histogram()+
   xlab("G") +ylab("Frequency") +
   theme_bw()+
-  theme(text = element_text(family = "Arial"))+
+  #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 ggsave("Histogram of G.pdf",height=8,width = 8)
 
@@ -68,7 +69,7 @@ soils %>%
   scale_color_viridis(discrete = T)+
   #guides(fill=guide_legend(title="Tipo de solo"),color=guide_legend(title="Tipo de solo"))+
   theme_bw()+
-  theme(text = element_text(family = "Arial"))+
+  #theme(text = element_text(family = "Arial"))+
   theme(legend.title = element_blank(), legend.position=c(0.85,0.75) )+
   theme(plot.title = element_blank(),text = element_text(size = 14)) 
 ggsave("Density function of G by soil type - before outliers treatment.pdf",height=8,width = 8)
@@ -118,7 +119,7 @@ soils %>%
   scale_color_viridis(discrete = T)+
   #guides(fill=guide_legend(title="Tipo de solo"),color=guide_legend(title="Tipo de solo"))+
   theme_bw()+
-  theme(text = element_text(family = "Arial"))+
+  #theme(text = element_text(family = "Arial"))+
   theme(legend.title = element_blank(), legend.position=c(0.85,0.75) )+
   theme(plot.title = element_blank(),text = element_text(size = 14)) 
 ggsave("Density function of G by soil type - after outliers treatment.pdf",height=8,width = 8)
@@ -324,17 +325,17 @@ ggsave("scatter.pdf",height=8,width = 8)
 ##################################################################################
 #Estimando a Regressão Múltipla
 
-model_soils <- lm(formula = gamma ~ . - Soil -mq -Rf -fs,
+model_soils <- lm(formula = gamma ~ . - Soil -mq -Rf -fs -cluster,
                       data = soils)
 summary(model_soils)
 #################################################################################
-#     LOGARITIMIC FUNCTION APPLIED TO FS, QT AND U
+#     LOGARITIMIC FUNCTION APPLIED TO QT AND U
 #############################################################################
 
-soils$logFs <- log10(soils$fs+1)
+#soils$logFs <- log10(soils$fs+1)
 soils$logqt <- log10(soils$qt+1)
 soils$UTransf <- log10(soils$u+1)
-model_log <- lm(gamma~G+logqt+logFs+UTransf  ,
+model_log <- lm(gamma~G+logqt+UTransf  ,
                  data = soils)
 summary(model_log)
 saveRDS(model_log, "model_log.rds")
@@ -343,28 +344,43 @@ soils$yhat_lm_log <- model_log$fitted.values
 #################################################################################
 #     Robertson & Cabal (2010)
 #############################################################################
-soils$yhat_gamma_r_cabal <- 3.72+ 0.24*(0.27 * log(abs(soils$Rf)) + 0.36*log(soils$qt*100) +1.236)*10*soils$G/2.65
-summary(lm(formula=gamma~yhat_gamma_r_cabal, data=soils))
-plot(soils$yhat_gamma_r_cabal,soils$gamma)
-rsq(soils$yhat_gamma_r_cabal,soils$gamma)
+soils$yhat_gamma_r_cabal_1 <- (0.27 * log(abs(soils$Rf)) + 0.36*log(soils$qt*100) +1.236)*10
+summary(lm(formula=gamma~yhat_gamma_r_cabal_1, data=soils))
+plot(soils$yhat_gamma_r_cabal_1,soils$gamma)
+rsq(soils$yhat_gamma_r_cabal_1,soils$gamma)
+
+
+soils$yhat_gamma_r_cabal_2 <- 3.72+ 0.24*(0.27 * log(abs(soils$Rf)) + 0.36*log(soils$qt*100) +1.236)*10*soils$G/2.65
+summary(lm(formula=gamma~yhat_gamma_r_cabal_2, data=soils))
+plot(soils$yhat_gamma_r_cabal_2,soils$gamma)
+rsq(soils$yhat_gamma_r_cabal_2,soils$gamma)
 
 #################################################################################
 # Mayne & Peuchen (2012)
 #############################################################################
-#soils$yhat_gamma_m_peuchen <- (0.636*(soils$qt)^0.072) * (10 + soils$mq/8)
-soils$yhat_gamma_m_peuchen <- (0.886*(soils$qt/100)^0.072) * (1 + 0.125*soils$mq/10) *10
-plot(soils$yhat_gamma_m_peuchen,soils$gamma)
-rsq(soils$yhat_gamma_m_peuchen,soils$gamma)
+soils$yhat_gamma_m_peuchen_1 <- 10+(soils$mq/8)
+plot(soils$yhat_gamma_m_peuchen_1,soils$gamma)
+rsq(soils$yhat_gamma_m_peuchen_1,soils$gamma)
 
+soils$yhat_gamma_m_peuchen_2 <- (0.636*(soils$qt)^0.072) * (10 + soils$mq/8)
+plot(soils$yhat_gamma_m_peuchen_2,soils$gamma)
+rsq(soils$yhat_gamma_m_peuchen_2,soils$gamma)
+#soils$yhat_gamma_m_peuchen <- (0.886*(soils$qt/100)^0.072) * (1 + 0.125*soils$mq/10) *10
 #################################################################################
 # Mayne (2014)
 #############################################################################
-soils$yhat_gamma_mayne <- 12 + 1.5*log(soils$fs+1)
-plot(soils$yhat_gamma_mayne,soils$gamma)
-rsq(soils$yhat_gamma_mayne,soils$gamma)
+soils$yhat_gamma_mayne_1 <- 26 - (14/(1+(0.5*log10(soils$fs+1))^2))
+plot(soils$yhat_gamma_mayne_1,soils$gamma)
+rsq(soils$yhat_gamma_mayne_1,soils$gamma)
+
+
+soils$yhat_gamma_mayne_2 <- 12 + 1.5*log(soils$fs+1)
+plot(soils$yhat_gamma_mayne_2,soils$gamma)
+rsq(soils$yhat_gamma_mayne_2,soils$gamma)
 
 ###############NEURAL NETWORK##############################
-soils_nn <- select(soils, c(gamma, G,qt,fs,u,yhat_lm_log))
+soils_nn <- select(soils, c(gamma, G,qt,fs,u))
+#soils_nn <- select(soils, c(gamma, G,logqt,UTransf,yhat_lm_log))
 
 #Scaling data for performance
 set.seed(42)
@@ -378,13 +394,13 @@ test_data <- as.data.frame(scaled[-index,])
 
 set.seed(42)
 nn <- neuralnet(gamma~.,data=train_data,hidden=c(32,16,8,4),linear.output=T)
-plot.nnet(nn,alpha.val = 0.5, bord.col = 'black',max.sp= T, size=10)
+#plot.nnet(nn,alpha.val = 0.5, bord.col = 'black',max.sp= T, size=10)
 saveRDS(nn, "model_nn_train_data.rds")
 nn_all <- neuralnet(gamma~.,data=scaled,hidden=c(32,16,8,4),linear.output=T)
 saveRDS(nn_all, "model_nn_all_data.rds")
 
-pr.nn <- compute(nn,test_data[,2:6])
-pr.all <- compute(nn,scaled[,2:6])
+pr.nn <- compute(nn,test_data[,2:5])
+pr.all <- compute(nn,scaled[,2:5])
 
 test_data$yhat_nn <- pr.nn$net.result
 
@@ -410,12 +426,11 @@ soils$diff_lm_log <- abs(soils$gamma - soils$yhat_lm_log)/soils$gamma
 
 #scatter plot - linear regression
 eqn <- sprintf(
-  "italic(gamma) == %.3g + %.3g * italic(G) + %.3g*qt + %.3g*fs +%.3g*u * ',' ~~ italic(r)^2 ~ '=' ~ %.2g",
+  "italic(gamma) == %.3g + %.3g * italic(G) + %.3g*qt +%.3g*u * ',' ~~ italic(r)^2 ~ '=' ~ %.2g",
   coef(model_soils)[1],
   coef(model_soils)[2],
   coef(model_soils)[3],
   coef(model_soils)[4],
-  coef(model_soils)[5],
   summary(model_soils)$r.squared
 )
 soils %>%
@@ -428,7 +443,7 @@ soils %>%
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
   labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
   theme_bw() +
-  theme(text = element_text(family = "Arial"))+
+  #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
 ggsave("linear_model.pdf",height=8,width = 8)
@@ -436,12 +451,11 @@ ggsave("linear_model.pdf",height=8,width = 8)
 #linear regression with log
 rsq(soils$gamma,soils$yhat_lm_log)
 eqn <- sprintf(
-  "italic(gamma) ==  %.3g + %.3g * italic(G) + %.3g*log(qt) + %.3g*log(fs) + %.3g*log(u) * ',' ~~ italic(r)^2 ~ '=' ~ %.2g",
+  "italic(gamma) ==  %.3g + %.3g * italic(G) + %.3g*log(qt)+ %.3g*log(u) * ',' ~~ italic(r)^2 ~ '=' ~ %.2g",
   coef(model_log)[1],
   coef(model_log)[2],
   coef(model_log)[3],
   coef(model_log)[4],
-  coef(model_log)[5],
   rsq(soils$gamma,soils$yhat_lm_log)
 )
 
@@ -455,7 +469,7 @@ soils %>%
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
   labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
   theme_bw() +
-  theme(text = element_text(family = "Arial"))+
+  #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
 ggsave("linear_model_log.pdf",height=8,width = 8)
@@ -478,7 +492,7 @@ soils %>%
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
   labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
   theme_bw() +
-  theme(text = element_text(family = "Arial"))+
+ #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
 ggsave("robertson_and_cabal.pdf",height=8,width = 8)
@@ -501,7 +515,7 @@ soils %>%
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
   labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
   theme_bw() +
-  theme(text = element_text(family = "Arial"))+
+ # theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
 ggsave("Mayne_and_peuchen.pdf",height=8,width = 8)
@@ -524,7 +538,7 @@ soils %>%
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
   labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
   theme_bw() +
-  theme(text = element_text(family = "Arial"))+
+  #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
 ggsave("Mayne_2014.pdf",height=8,width = 8)
@@ -533,7 +547,7 @@ ggsave("Mayne_2014.pdf",height=8,width = 8)
 
 #gerando um gráfico do model de regressão RNA
 eqn <- sprintf(
-  "Hidden ~ layers:~ 4 * ',' ~~ italic(r)^2 ~ '=' ~ %.2g",
+  "Hidden ~ layers:~ 4 (32-16-8-4)* ',' ~~ italic(r)^2 ~ '=' ~ %.2g",
   rsq(test_data$gamma,test_data$yhat_nn)
 )
 
@@ -547,7 +561,7 @@ test_data %>%
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
   labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
   theme_bw() +
-  theme(text = element_text(family = "Arial"))+
+  #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
 ggsave("test_data_nn_scaled_entrada_log_4_camadas.pdf",height=8,width = 8)
@@ -555,7 +569,7 @@ ggsave("test_data_nn_scaled_entrada_log_4_camadas.pdf",height=8,width = 8)
 
 #gerando um gráfico do model de regressão RNA
 eqn <- sprintf(
-  "Hidden ~ layers: ~ 4* ',' ~~ italic(r)^2 ~ '=' ~ %.2g",
+  "Hidden ~ layers: ~ 4 (32-16-8-4)* ',' ~~ italic(r)^2 ~ '=' ~ %.2g",
   rsq(soils$gamma,soils$yhat_nn)
 )
 
@@ -569,7 +583,7 @@ soils %>%
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
   labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
   theme_bw() +
-  theme(text = element_text(family = "Arial"))+
+  #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
 ggsave("neural_network_entrada_log_4_camadas.pdf",height=8,width = 8)
