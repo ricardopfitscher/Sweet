@@ -4,7 +4,7 @@ pacotes <- c("tidyverse","ggrepel","fastDummies","knitr", "splines",
              "ggstance","cowplot","beepr","factoextra","neuralnet",
              "ggpubr","GGally", "viridis", "plyr", "ggforce","randomForest")
 
-install.packages("devtools")
+#install.packages("devtools")
 library("devtools")
 source_url('https://gist.githubusercontent.com/fawda123/7471137/raw/466c1474d0a505ff044412703516c34f1a4684a5/nnet_plot_update.r')
 
@@ -316,8 +316,8 @@ summary(soils$Soil[soils$cluster=="Cluster 5"])
 f<-ggpairs(soils[2:6], aes( alpha = 0.4))
 f +
   theme_bw()+
-  theme(plot.title = element_blank(),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("scatter.pdf",height=8,width = 8)
+  theme(plot.title = element_blank(),axis.text = element_text(size = 7), axis.title = element_text(size = 14),text = element_text(size = 14))   
+ggsave("scatter.pdf")
 
 ##################################################################################
 #     ESTIMANDO UM model MÚLTIPLO COM AS VARIÁVEIS DA BASE DE DADOS soils    
