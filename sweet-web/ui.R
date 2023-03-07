@@ -21,7 +21,7 @@ textInputRow<-function (inputId, label, value = "")
 ui <- fluidPage(
   
   # App title ----
-  titlePanel("SWEET - Soil Specific WEight Estimator"),
+  titlePanel("SWEET - Soil unit WEight Estimator"),
   
   # Sidebar layout with input and output definitions ----
   sidebarLayout(

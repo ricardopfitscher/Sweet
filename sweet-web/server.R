@@ -61,18 +61,18 @@ server <- function(input, output) {
     database$logqt <- log(database$qt+1)
     database$UTransf <- log(database$u+1)
     database$yhat_lm_log <- predict(model_log, database)
-    database_model <- select(database, c(G,qt,fs,u,yhat_lm_log))
+    database_model <- select(database, c(G,qt,fs,u))
     max_data <- data.frame(G = c(4.34210),
                            qt = c(48123.74150),
                            fs = c(611.40524),
-                           u = c(2898.91627),
-                           yhat_lm_log = c(24.72895)
+                           u = c(2898.91627)
+                           #yhat_lm_log = c(24.72895)
     )
     min_data <- data.frame(G = c(1.572000),
                            qt = c(30.372072),
                            fs = c(0.000000),
-                           u = c(0.000000),
-                           yhat_lm_log = c(9.976484)
+                           u = c(0.000000)
+                           #yhat_lm_log = c(9.976484)
     )
 
     scaled <- scale(database_model,center = min_data, scale = max_data - min_data)

@@ -5,9 +5,9 @@ account: rjpfitscher
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 7514964
-bundleId: 6472271
+bundleId: 6926361
 url: https://rjpfitscher.shinyapps.io/sweet-web/
-when: 1667498036.97852
-lastSyncTime: 1667498036.97855
+when: 1678202457.16
+lastSyncTime: 1678202457.16002
 asMultiple: FALSE
 asStatic: FALSE
