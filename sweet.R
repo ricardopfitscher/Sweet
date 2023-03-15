@@ -2,11 +2,9 @@ pacotes <- c("tidyverse","ggrepel","fastDummies","knitr", "splines",
              "reshape2","PerformanceAnalytics","metan","correlation",
              "see","ggraph","nortest","rgl","car","olsrr","jtools",
              "ggstance","cowplot","beepr","factoextra","neuralnet",
-             "ggpubr","GGally", "viridis", "plyr", "ggforce","randomForest")
+             "ggpubr","GGally", "viridis", "plyr", "ggforce","randomForest",
+             "openssl", "devtools")
 
-#install.packages("devtools")
-library("devtools")
-source_url('https://gist.githubusercontent.com/fawda123/7471137/raw/466c1474d0a505ff044412703516c34f1a4684a5/nnet_plot_update.r')
 
 if(sum(as.numeric(!pacotes %in% installed.packages())) != 0){
   instalador <- pacotes[!pacotes %in% installed.packages()]
@@ -18,12 +16,19 @@ if(sum(as.numeric(!pacotes %in% installed.packages())) != 0){
   sapply(pacotes, require, character = T) 
 }
 
-
+library("devtools")
+source_url('https://gist.githubusercontent.com/fawda123/7471137/raw/466c1474d0a505ff044412703516c34f1a4684a5/nnet_plot_update.r')
 
 rsq <- function (x, y) cor(x, y) ^ 2
 
 #-----------------------------DATASET -----------------------------------------------#
-soils <- read.csv("data/dataset.csv", sep = ";", header = T, dec = ",")
+#please, make contact to the authors to receive the key for the dataset
+#ricardo.pfitscher@ufsc.br
+passphrase <- charToRaw(readline(prompt="Enter passphrase to decrypt the dataset: "))
+key <- sha256(passphrase)
+encrypted_y <- readRDS("data/soils.rds")
+soils <- unserialize(aes_cbc_decrypt(encrypted_y, key = key))
+
 #Removing gamma superior to 50
 soils <- soils[soils$gamma<=50,]
 #normalizing measurements to a lower limit equal to 0
@@ -42,37 +47,31 @@ ggplot(soils) +
  geom_bar(aes(x=Soil)) +
   labs(x="",y="Number of occurrences")+
   theme_bw()+
-  #theme(text = element_text(family = "Arial"))+
   facet_zoom(ylim = c(0, 300))+
   theme(plot.title = element_blank(), axis.text.x=element_text(angle=90,hjust=1,vjust=0.5,size=14),text = element_text(size = 14))   
 
-ggsave("soils.pdf",height=8,width = 16)
+ggsave("figures/soils.pdf",height=8,width = 16)
 
-# Histograma do G
+# Histogram of G
 ggplot(soils, aes(G))+
   geom_histogram()+
   xlab("G") +ylab("Frequency") +
   theme_bw()+
-  #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
-ggsave("Histogram of G.pdf",height=8,width = 8)
+ggsave("figures/Histogram of G.pdf",height=8,width = 8)
 
-# Histograma do G por tipo de solo:
+#Histogram of G by soil type:
 
 soils %>%
   ggplot(aes(x=G, color=Soil, fill=Soil)) +
   labs(y="Probability distribution function (%)")+
- # geom_density()+
-  #geom_histogram(aes(y=..density..), alpha=0.5, position="identity")+
   geom_density(alpha=.5) +
   scale_fill_viridis(discrete = T )+
   scale_color_viridis(discrete = T)+
-  #guides(fill=guide_legend(title="Tipo de solo"),color=guide_legend(title="Tipo de solo"))+
   theme_bw()+
-  #theme(text = element_text(family = "Arial"))+
   theme(legend.title = element_blank(), legend.position=c(0.85,0.75) )+
   theme(plot.title = element_blank(),text = element_text(size = 14)) 
-ggsave("Density function of G by soil type - before outliers treatment.pdf",height=8,width = 8)
+ggsave("figures/Density function of G by soil type - before outliers treatment.pdf",height=8,width = 8)
 
 #-----------------------------OUTLIERS TREATMENT-------------------------------#
 outliers_removal <- function(dataset){
@@ -112,57 +111,46 @@ summary(soils)
 soils %>%
   ggplot(aes(x=G, color=Soil, fill=Soil)) +
   labs(y="Probability distribution function (%)")+
-  # geom_density()+
-  #geom_histogram(aes(y=..density..), alpha=0.5, position="identity")+
   geom_density(alpha=.5) +
   scale_fill_viridis(discrete = T )+
   scale_color_viridis(discrete = T)+
-  #guides(fill=guide_legend(title="Tipo de solo"),color=guide_legend(title="Tipo de solo"))+
   theme_bw()+
-  #theme(text = element_text(family = "Arial"))+
   theme(legend.title = element_blank(), legend.position=c(0.85,0.75) )+
   theme(plot.title = element_blank(),text = element_text(size = 14)) 
-ggsave("Density function of G by soil type - after outliers treatment.pdf",height=8,width = 8)
-#1861 --> ajustou os outliers
+ggsave("figures/Density function of G by soil type - after outliers treatment.pdf",height=8,width = 8)
 
 ##################################################################################
 # CLUSTERING ANALYSIS
 #################################################################################
 soilscluster <- select(soils, c("G","gamma","qt","fs","u"))
-
-#removendo a coluna com o nome dos soils
-#soils <- soils[,-1]
-#realizando o scale para padronizar as variáveis
 soils.scaled <- scale(soilscluster)
 
-#matriz de distâncias eucledianas
+#Euclidean distance
 distance = dist(soils.scaled, method = "euclidean")
 
-#Análise de Elbow, quantos clusters?
+#Elbow analysis
 f <- fviz_nbclust(soils.scaled, FUN = hcut, method = "wss")
 f + xlab("Number of clusters") +ylab("Total within sum of square (wss)") +
   theme_bw()+
   theme(plot.title = element_blank(),legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("wss.pdf",height=8,width = 8)
+ggsave("figures/wss.pdf",height=8,width = 8)
 
 f <- fviz_nbclust(soils.scaled, kmeans, method = "silhouette")
 f + xlab("Number of clusters") +ylab("average silhouette width") +
   theme_bw()+
   theme(plot.title = element_blank(),legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("silhuette.pdf",height=8,width = 8)
+ggsave("figures/silhuette.pdf",height=8,width = 8)
 
 # soils with 2 clusters
 set.seed(42)
 soils.k2 <- kmeans(soils.scaled, centers = 2)
 soils$cluster <- soils.k2$cluster
-#png(file="Cluster K2.pdf",width=800, height=600)
+
 f <- fviz_cluster(soils.k2, data = soils.scaled, main = "Cluster K2")
 f + 
-  #xlab("Dimensão 1 (44.7%)") +ylab("Dimensão 2 (24%)") +
   theme_bw()+
   theme(plot.title = element_blank(),legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("Cluster K2.pdf",height=8,width = 8)
-#dev.off()
+ggsave("figures/Cluster K2.pdf",height=8,width = 8)
 
 soils$cluster <- as.factor(soils$cluster)
 levels(soils$cluster) <- c("Cluster 1","Cluster 2")
@@ -172,11 +160,9 @@ ggplot(soils, aes(gamma))+
   xlab("gamma (kN/m³)") +ylab("Number of occurrences") +
   theme_bw()+
   theme(legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("gamma vs clusters K2.pdf",height=8,width = 8)
+ggsave("figures/gamma vs clusters K2.pdf",height=8,width = 8)
 
-#visualizando em cores os clusters
 soils %>% ggplot() +
-  #scale_colour_manual(values = c("#5ec962", "#21918c"))+
   scale_color_viridis(discrete = T)+
   geom_point(aes(x = G,
                  y = gamma,
@@ -185,7 +171,7 @@ soils %>% ggplot() +
   xlab("G") +ylab("gamma (kN/m³)") +
   theme_bw()+
   theme(legend.position="none", axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
-ggsave("cluster G vs gamma k=2.pdf",height=8,width = 8)
+ggsave("figures/cluster G vs gamma k=2.pdf",height=8,width = 8)
 summary(soils$Soil[soils$cluster=="Cluster 1"])
 summary(soils$Soil[soils$cluster=="Cluster 2"])
 
@@ -193,14 +179,12 @@ summary(soils$Soil[soils$cluster=="Cluster 2"])
 set.seed(42)
 soils.k3 <- kmeans(soils.scaled, centers = 3)
 soils$cluster <- soils.k3$cluster
-#png(file="Cluster K2.pdf",width=800, height=600)
 f <- fviz_cluster(soils.k3, data = soils.scaled, main = "Cluster K3")
 f + 
-  #xlab("Dimensão 1 (44.7%)") +ylab("Dimensão 2 (24%)") +
   theme_bw()+
   theme(plot.title = element_blank(),legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("Cluster K3.pdf",height=8,width = 8)
-#dev.off()
+ggsave("figures/Cluster K3.pdf",height=8,width = 8)
+
 
 soils$cluster <- as.factor(soils$cluster)
 levels(soils$cluster) <- c("Cluster 1","Cluster 2","Cluster 3")
@@ -210,9 +194,8 @@ ggplot(soils, aes(gamma))+
   xlab("gamma (kN/m³)") +ylab("Number of occurrences") +
   theme_bw()+
   theme(legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("gamma vs clusters K3.pdf",height=8,width = 8)
+ggsave("figures/gamma vs clusters K3.pdf",height=8,width = 8)
 
-#visualizando em cores os clusters
 soils %>% ggplot() +
   scale_color_viridis(discrete = T)+
   geom_point(aes(x = G,
@@ -222,7 +205,7 @@ soils %>% ggplot() +
   xlab("G") +ylab("gamma (kN/m³)") +
   theme_bw()+
   theme(legend.position="none", axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
-ggsave("cluster G vs gamma k=3.pdf",height=8,width = 8)
+ggsave("figures/cluster G vs gamma k=3.pdf",height=8,width = 8)
 
 summary(soils$Soil[soils$cluster=="Cluster 1"])
 summary(soils$Soil[soils$cluster=="Cluster 2"])
@@ -237,8 +220,8 @@ f <- fviz_cluster(soils.k4, data = soils.scaled, main = "Cluster K6")
 f + 
   theme_bw()+
   theme(plot.title = element_blank(),legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("Cluster K4.pdf",height=8,width = 8)
-#dev.off()
+ggsave("figures/Cluster K4.pdf",height=8,width = 8)
+
 
 soils$cluster <- as.factor(soils$cluster)
 levels(soils$cluster) <- c("Cluster 1","Cluster 2","Cluster 3","Cluster 4","Cluster 5")
@@ -248,9 +231,8 @@ ggplot(soils, aes(gamma))+
   xlab("gamma (kN/m³)") +ylab("Number of ocurrences") +
   theme_bw()+
   theme(legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("gamma vs clusters K4.pdf",height=8,width = 8)
+ggsave("figures/gamma vs clusters K4.pdf",height=8,width = 8)
 
-#visualizando em cores os clusters
 soils %>% ggplot() +
   scale_color_viridis(discrete=T)+
   geom_point(aes(x = G,
@@ -260,7 +242,7 @@ soils %>% ggplot() +
   xlab("G") +ylab("gamma (kN/m³)") +
   theme_bw()+
   theme(legend.position="none", axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
-ggsave("cluster G vs gamma k=4.pdf",height=8,width = 8)
+ggsave("figures/cluster G vs gamma k=4.pdf",height=8,width = 8)
 
 summary(soils$Soil[soils$cluster=="Cluster 1"])
 summary(soils$Soil[soils$cluster=="Cluster 2"])
@@ -271,14 +253,11 @@ summary(soils$Soil[soils$cluster=="Cluster 4"])
 set.seed(42)
 soils.k5 <- kmeans(soils.scaled, centers = 5)
 soils$cluster <- soils.k5$cluster
-#png(file="Cluster K2.pdf",width=800, height=600)
-f <- fviz_cluster(soils.k5, data = soils.scaled, main = "Cluster K6")
+f <- fviz_cluster(soils.k5, data = soils.scaled, main = "Cluster K5")
 f + 
-  #xlab("Dimensão 1 (44.7%)") +ylab("Dimensão 2 (24%)") +
   theme_bw()+
   theme(plot.title = element_blank(),legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("Cluster K5.pdf",height=8,width = 8)
-#dev.off()
+ggsave("figures/Cluster K5.pdf",height=8,width = 8)
 
 soils$cluster <- as.factor(soils$cluster)
 levels(soils$cluster) <- c("Cluster 1","Cluster 2","Cluster 3","Cluster 4","Cluster 5")
@@ -288,10 +267,10 @@ ggplot(soils, aes(gamma))+
   xlab("gamma (kN/m³)") +ylab("Number of ocurrences") +
   theme_bw()+
   theme(legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("gamma vs clusters K5.pdf",height=8,width = 8)
+ggsave("figures/gamma vs clusters K5.pdf",height=8,width = 8)
 
 
-#visualizando em cores os clusters
+#visualizing clusters
 soils %>% ggplot() +
   scale_color_viridis(discrete=T)+
   geom_point(aes(x = G,
@@ -301,7 +280,7 @@ soils %>% ggplot() +
   xlab("G") +ylab("gamma (kN/m³)") +
   theme_bw()+
   theme(legend.position="none", axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
-ggsave("cluster G vs gamma k=5.pdf",height=8,width = 8)
+ggsave("figures/cluster G vs gamma k=5.pdf",height=8,width = 8)
 
 summary(soils$Soil[soils$cluster=="Cluster 1"])
 summary(soils$Soil[soils$cluster=="Cluster 2"])
@@ -317,13 +296,12 @@ f<-ggpairs(soils[2:6], aes( alpha = 0.4))
 f +
   theme_bw()+
   theme(plot.title = element_blank(),axis.text = element_text(size = 7), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("scatter.pdf")
+ggsave("figures/scatter.pdf")
 
 ##################################################################################
-#     ESTIMANDO UM model MÚLTIPLO COM AS VARIÁVEIS DA BASE DE DADOS soils    
-#     TRATA-SE DE UMA REGRESSÃO LINEAR
+#     Multiple linear model  
+#     
 ##################################################################################
-#Estimando a Regressão Múltipla
 
 model_soils <- lm(formula = gamma ~ . - Soil -mq -Rf -fs -cluster,
                       data = soils)
@@ -332,7 +310,6 @@ summary(model_soils)
 #     LOGARITIMIC FUNCTION APPLIED TO QT AND U
 #############################################################################
 
-#soils$logFs <- log10(soils$fs+1)
 soils$logqt <- log10(soils$qt+1)
 soils$UTransf <- log10(soils$u+1)
 model_log <- lm(gamma~G+logqt+UTransf  ,
@@ -365,7 +342,7 @@ rsq(soils$yhat_gamma_m_peuchen_1,soils$gamma)
 soils$yhat_gamma_m_peuchen_2 <- (0.636*(soils$qt)^0.072) * (10 + soils$mq/8)
 plot(soils$yhat_gamma_m_peuchen_2,soils$gamma)
 rsq(soils$yhat_gamma_m_peuchen_2,soils$gamma)
-#soils$yhat_gamma_m_peuchen <- (0.886*(soils$qt/100)^0.072) * (1 + 0.125*soils$mq/10) *10
+
 #################################################################################
 # Mayne (2014)
 #############################################################################
@@ -380,7 +357,6 @@ rsq(soils$yhat_gamma_mayne_2,soils$gamma)
 
 ###############NEURAL NETWORK##############################
 soils_nn <- select(soils, c(gamma, G,qt,fs,u))
-#soils_nn <- select(soils, c(gamma, G,logqt,UTransf,yhat_lm_log))
 
 #Scaling data for performance
 set.seed(42)
@@ -403,13 +379,6 @@ pr.nn <- compute(nn,test_data[,2:5])
 pr.all <- compute(nn,scaled[,2:5])
 
 test_data$yhat_nn <- pr.nn$net.result
-
-##########################################################
-#RANDOM FOREST TO PREDICT THE SOIL TYPE
-##########################################################
-#scaled <- cbind(scaled, select(soils,Soil))
-#model_RF <- randomForest(Soil~., data = scaled, ntree = 100, mtry = 3, importance = TRUE)
-#model_RF
 
 
 ##########################################################################
@@ -443,10 +412,9 @@ soils %>%
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
   labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
   theme_bw() +
-  #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
-ggsave("linear_model.pdf",height=8,width = 8)
+ggsave("figures/linear_model.pdf",height=8,width = 8)
 
 #linear regression with log
 rsq(soils$gamma,soils$yhat_lm_log)
@@ -472,7 +440,7 @@ soils %>%
   #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
-ggsave("linear_model_log.pdf",height=8,width = 8)
+ggsave("figures/linear_model_log.pdf",height=8,width = 8)
 
 
 #  Robertson & Cabal (2010)
@@ -495,7 +463,7 @@ soils %>%
  #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
-ggsave("robertson_and_cabal.pdf",height=8,width = 8)
+ggsave("figures/robertson_and_cabal.pdf",height=8,width = 8)
 
 
 # Mayne & Peuchen (2012)
@@ -518,7 +486,7 @@ soils %>%
  # theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
-ggsave("Mayne_and_peuchen.pdf",height=8,width = 8)
+ggsave("figures/Mayne_and_peuchen.pdf",height=8,width = 8)
 
 
 # Mayne (2014)
@@ -541,11 +509,9 @@ soils %>%
   #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
-ggsave("Mayne_2014.pdf",height=8,width = 8)
+ggsave("figures/Mayne_2014.pdf",height=8,width = 8)
 
-
-
-#gerando um gráfico do model de regressão RNA
+#ANN regression chart
 eqn <- sprintf(
   "Hidden ~ layers:~ 4 (32-16-8-4)* ',' ~~ italic(r)^2 ~ '=' ~ %.2g",
   rsq(test_data$gamma,test_data$yhat_nn)
@@ -561,13 +527,12 @@ test_data %>%
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
   labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
   theme_bw() +
-  #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
-ggsave("test_data_nn_scaled_entrada_log_4_camadas.pdf",height=8,width = 8)
+ggsave("figures/test_data_nn_scaled_4_layers.pdf",height=8,width = 8)
 
 
-#gerando um gráfico do model de regressão RNA
+#ANN  regression chart
 eqn <- sprintf(
   "Hidden ~ layers: ~ 4 (32-16-8-4)* ',' ~~ italic(r)^2 ~ '=' ~ %.2g",
   rsq(soils$gamma,soils$yhat_nn)
@@ -583,8 +548,7 @@ soils %>%
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
   labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
   theme_bw() +
-  #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
-ggsave("neural_network_entrada_log_4_camadas.pdf",height=8,width = 8)
+ggsave("figures/neural_network_4_layers.pdf",height=8,width = 8)
 
