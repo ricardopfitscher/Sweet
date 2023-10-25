@@ -24,11 +24,13 @@ rsq <- function (x, y) cor(x, y) ^ 2
 #-----------------------------DATASET -----------------------------------------------#
 #please, make contact to the authors to receive the key for the dataset
 #ricardo.pfitscher@ufsc.br
-passphrase <- charToRaw(readline(prompt="Enter passphrase to decrypt the dataset: "))
-key <- sha256(passphrase)
-encrypted_y <- readRDS("data/soils.rds")
-soils <- unserialize(aes_cbc_decrypt(encrypted_y, key = key))
-
+#passphrase <- charToRaw(readline(prompt="Enter passphrase to decrypt the dataset: "))
+#key <- sha256(passphrase)
+#encrypted_y <- readRDS("data/soils.rds")
+#soils <- unserialize(aes_cbc_decrypt(encrypted_y, key = key))
+soils <- read.csv("data/dataset.csv", sep = ";", header = T, dec = ".")
+#uncomment for Filtering mining tailing
+#soils <- soils %>% filter(grepl('Mining', Soil))
 #Removing gamma superior to 50
 soils <- soils[soils$gamma<=50,]
 #normalizing measurements to a lower limit equal to 0
@@ -50,7 +52,8 @@ ggplot(soils) +
   facet_zoom(ylim = c(0, 300))+
   theme(plot.title = element_blank(), axis.text.x=element_text(angle=90,hjust=1,vjust=0.5,size=14),text = element_text(size = 14))   
 
-ggsave("figures/soils.pdf",height=8,width = 16)
+#ggsave("figures/soils.pdf",height=8,width = 16)
+ggsave("figures/fig1-soils.png",height=8,width = 16)
 
 # Histogram of G
 ggplot(soils, aes(G))+
@@ -133,13 +136,15 @@ f <- fviz_nbclust(soils.scaled, FUN = hcut, method = "wss")
 f + xlab("Number of clusters") +ylab("Total within sum of square (wss)") +
   theme_bw()+
   theme(plot.title = element_blank(),legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("figures/wss.pdf",height=8,width = 8)
+#ggsave("figures/wss.pdf",height=8,width = 8)
+ggsave("figures/fig3b-wss.png",height=8,width = 8)
 
 f <- fviz_nbclust(soils.scaled, kmeans, method = "silhouette")
 f + xlab("Number of clusters") +ylab("average silhouette width") +
   theme_bw()+
   theme(plot.title = element_blank(),legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("figures/silhuette.pdf",height=8,width = 8)
+#ggsave("figures/silhuette.pdf",height=8,width = 8)
+ggsave("figures/3a-silhuette.png",height=8,width = 8)
 
 # soils with 2 clusters
 set.seed(42)
@@ -160,7 +165,8 @@ ggplot(soils, aes(gamma))+
   xlab("gamma (kN/m³)") +ylab("Number of occurrences") +
   theme_bw()+
   theme(legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("figures/gamma vs clusters K2.pdf",height=8,width = 8)
+#ggsave("figures/gamma vs clusters K2.pdf",height=8,width = 8)
+ggsave("figures/figA8-gamma vs clusters K2.png",height=8,width = 8)
 
 soils %>% ggplot() +
   scale_color_viridis(discrete = T)+
@@ -171,7 +177,7 @@ soils %>% ggplot() +
   xlab("G") +ylab("gamma (kN/m³)") +
   theme_bw()+
   theme(legend.position="none", axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
-ggsave("figures/cluster G vs gamma k=2.pdf",height=8,width = 8)
+ggsave("figures/fig4a-cluster G vs gamma k=2.png",height=8,width = 8)
 summary(soils$Soil[soils$cluster=="Cluster 1"])
 summary(soils$Soil[soils$cluster=="Cluster 2"])
 
@@ -194,7 +200,7 @@ ggplot(soils, aes(gamma))+
   xlab("gamma (kN/m³)") +ylab("Number of occurrences") +
   theme_bw()+
   theme(legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("figures/gamma vs clusters K3.pdf",height=8,width = 8)
+ggsave("figures/figA9-gamma vs clusters K3.png",height=8,width = 8)
 
 soils %>% ggplot() +
   scale_color_viridis(discrete = T)+
@@ -205,7 +211,7 @@ soils %>% ggplot() +
   xlab("G") +ylab("gamma (kN/m³)") +
   theme_bw()+
   theme(legend.position="none", axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
-ggsave("figures/cluster G vs gamma k=3.pdf",height=8,width = 8)
+ggsave("figures/fig4b-cluster G vs gamma k=3.png",height=8,width = 8)
 
 summary(soils$Soil[soils$cluster=="Cluster 1"])
 summary(soils$Soil[soils$cluster=="Cluster 2"])
@@ -231,7 +237,7 @@ ggplot(soils, aes(gamma))+
   xlab("gamma (kN/m³)") +ylab("Number of ocurrences") +
   theme_bw()+
   theme(legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("figures/gamma vs clusters K4.pdf",height=8,width = 8)
+ggsave("figures/figA10-gamma vs clusters K4.png",height=8,width = 8)
 
 soils %>% ggplot() +
   scale_color_viridis(discrete=T)+
@@ -242,7 +248,7 @@ soils %>% ggplot() +
   xlab("G") +ylab("gamma (kN/m³)") +
   theme_bw()+
   theme(legend.position="none", axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
-ggsave("figures/cluster G vs gamma k=4.pdf",height=8,width = 8)
+ggsave("figures/fig4c-cluster G vs gamma k=4.png",height=8,width = 8)
 
 summary(soils$Soil[soils$cluster=="Cluster 1"])
 summary(soils$Soil[soils$cluster=="Cluster 2"])
@@ -267,7 +273,7 @@ ggplot(soils, aes(gamma))+
   xlab("gamma (kN/m³)") +ylab("Number of ocurrences") +
   theme_bw()+
   theme(legend.text = element_text( size = 14),legend.position=c(0.92,0.85),axis.text = element_text(size = 14), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("figures/gamma vs clusters K5.pdf",height=8,width = 8)
+ggsave("figures/figA11-gamma vs clusters K5.png",height=8,width = 8)
 
 
 #visualizing clusters
@@ -280,7 +286,7 @@ soils %>% ggplot() +
   xlab("G") +ylab("gamma (kN/m³)") +
   theme_bw()+
   theme(legend.position="none", axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
-ggsave("figures/cluster G vs gamma k=5.pdf",height=8,width = 8)
+ggsave("figures/fig4d-cluster G vs gamma k=5.png",height=8,width = 8)
 
 summary(soils$Soil[soils$cluster=="Cluster 1"])
 summary(soils$Soil[soils$cluster=="Cluster 2"])
@@ -296,7 +302,7 @@ f<-ggpairs(soils[2:6], aes( alpha = 0.4))
 f +
   theme_bw()+
   theme(plot.title = element_blank(),axis.text = element_text(size = 7), axis.title = element_text(size = 14),text = element_text(size = 14))   
-ggsave("figures/scatter.pdf")
+ggsave("figures/fig5-scatter.png")
 
 ##################################################################################
 #     Multiple linear model  
@@ -414,7 +420,7 @@ soils %>%
   theme_bw() +
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
-ggsave("figures/linear_model.pdf",height=8,width = 8)
+ggsave("figures/fig6a-linear_model.png",height=8,width = 8)
 
 #linear regression with log
 rsq(soils$gamma,soils$yhat_lm_log)
@@ -440,7 +446,7 @@ soils %>%
   #theme(text = element_text(family = "Arial"))+
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
-ggsave("figures/linear_model_log.pdf",height=8,width = 8)
+ggsave("figures/fig6b-linear_model_log.png",height=8,width = 8)
 
 
 #  Robertson & Cabal (2010)
@@ -525,11 +531,11 @@ test_data %>%
               color = "grey30", size = 1.05,
               linetype = "longdash") +
   annotate("text",x = Inf, y = -Inf,label = eqn, parse = TRUE,hjust = 1.1, vjust = -.5, size=4  )+
-  labs(x = "Soil unit weight (kN/m³)", y = "Estimated soil unit weight (kN/m³)") +
+  labs(x = "Soil unit weight (scaled)", y = "Estimated soil unit weight (scaled)") +
   theme_bw() +
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
-ggsave("figures/test_data_nn_scaled_4_layers.pdf",height=8,width = 8)
+ggsave("figures/fig7a-test_data_nn_scaled_4_layers.png",height=8,width = 8)
 
 
 #ANN  regression chart
@@ -550,5 +556,5 @@ soils %>%
   theme_bw() +
   theme(legend.text = element_text( size = 16),legend.position=c(0.92,0.85),axis.text = element_text(size = 20), axis.title = element_text(size = 20),text = element_text(size = 20))   
 
-ggsave("figures/neural_network_4_layers.pdf",height=8,width = 8)
+ggsave("figures/fig7b-neural_network_4_layers.png",height=8,width = 8)
 

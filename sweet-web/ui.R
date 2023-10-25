@@ -45,9 +45,9 @@ ui <- fluidPage(
       p("Feed forms to add data directly:"),
 
       textInputRow(inputId="G", label="G", value = 0.0),
-      textInputRow(inputId="qt", label="qt", value = 0.0),
-      textInputRow(inputId="fs", label="fs", value = 0.0),
-      textInputRow(inputId="u", label="u ", value = 0.0),
+      textInputRow(inputId="qt", label="qt (kPa)", value = 0.0),
+      textInputRow(inputId="fs", label="fs (kPa)", value = 0.0),
+      textInputRow(inputId="u", label="u2 (kPa)", value = 0.0),
       textInputRow(inputId="soil.name", label="Soil name", value = "Example"),
       actionButton("submit", "Add")
       
